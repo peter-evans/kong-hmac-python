@@ -1,6 +1,9 @@
 # kong_hmac.py
 
-import base64, hashlib, hmac, re
+import base64
+import hashlib
+import hmac
+import re
 from wsgiref.handlers import format_date_time
 from datetime import datetime
 from time import mktime
@@ -15,7 +18,8 @@ def create_date_header():
 def get_headers_string(signature_headers):
     headers = ''
     for key in signature_headers:
-        if headers != '': headers += ' '
+        if headers != '':
+            headers += ' '
         headers += key
     return headers
 
@@ -23,7 +27,8 @@ def get_headers_string(signature_headers):
 def get_signature_string(signature_headers):
     sig_string = ''
     for key, value in signature_headers.iteritems():
-        if sig_string != '': sig_string += '\n'
+        if sig_string != '':
+            sig_string += '\n'
         if key.lower() == 'request-line':
             sig_string += value
         else:
@@ -40,9 +45,9 @@ def md5_hash_base64(string_to_hash):
 def sha1_hash_base64(string_to_hash, secret):
     h = hmac.new(secret, (string_to_hash).encode('utf-8'), hashlib.sha1)
     return base64.b64encode(h.digest())
-    
 
-def generate_request_headers(key_id, secret, url, data = None, content_type = None):
+
+def generate_request_headers(key_id, secret, url, data=None, content_type=None):
     # Set the authorization header template
     auth_header_template = 'hmac username="{}",algorithm="{}",headers="{}",signature="{}"'
     # Set the signature hash algorithm
@@ -51,7 +56,7 @@ def generate_request_headers(key_id, secret, url, data = None, content_type = No
     date_header = create_date_header()
     # Set headers for the signature hash
     signature_headers = {
-        'date' : date_header
+        'date': date_header
         }
 
     # Determine request method
@@ -69,7 +74,7 @@ def generate_request_headers(key_id, secret, url, data = None, content_type = No
         signature_headers['content-length'] = content_length
 
     # Strip the hostname from the URL
-    target_url = re.sub(r"^https?://[^/]+/", "/", url)    
+    target_url = re.sub(r"^https?://[^/]+/", "/", url)
     # Build the request-line header
     request_line = request_method + ' ' + target_url + ' HTTP/1.1'
     # Add to headers for the signature hash
@@ -80,22 +85,22 @@ def generate_request_headers(key_id, secret, url, data = None, content_type = No
     # Build the signature string
     signature_string = get_signature_string(signature_headers)
     # Hash the signature string using the specified algorithm
-    signature_hash = sha1_hash_base64(signature_string, secret);
+    signature_hash = sha1_hash_base64(signature_string, secret)
     # Format the authorization header
     auth_header = auth_header_template.format(key_id, algorithm, headers, signature_hash)
 
     if request_method == 'GET':
         request_headers = {
-            'Authorization' : auth_header,
-            'Date' : date_header
+            'Authorization': auth_header,
+            'Date': date_header
             }
     else:
         request_headers = {
-            'Authorization' : auth_header,
-            'Date' : date_header,
-            'Content-Type' : content_type,
-            'Content-MD5' : base64md5,
-            'Content-Length' : content_length
+            'Authorization': auth_header,
+            'Date': date_header,
+            'Content-Type': content_type,
+            'Content-MD5': base64md5,
+            'Content-Length': content_length
             }
 
     return request_headers
